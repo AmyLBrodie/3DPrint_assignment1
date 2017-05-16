@@ -31,6 +31,8 @@ struct Triangle
 struct Edge
 {
     int v[2];   ///< indices into the vertex list for edge endpoints
+    
+    bool oriented;
 };
 
 /**
@@ -66,6 +68,7 @@ private:
     cgp::Vector trx;                 ///< translation
     float xrot, yrot, zrot;     ///< rotation angles about x, y, and z axes
     std::vector<Sphere> boundspheres; ///< bounding sphere accel structure
+    int eulerchar;
 
     /**
      * Search list of vertices to find matching point
@@ -193,6 +196,16 @@ public:
      * @todo manifoldValidity requires completing for CGP Prac1
      */
     bool manifoldValidity();
+    
+    int getEuler();
+    
+    vector<cgp::Point> getVerts();
+    
+    void setVerts(vector<cgp::Point> pnt);
+    
+    vector<Edge> getEdges();
+    
+    bool checkEdgeBound(vector<Edge> edges);
 };
 
 #endif

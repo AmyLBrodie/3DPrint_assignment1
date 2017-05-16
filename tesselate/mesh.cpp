@@ -449,12 +449,15 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 	unordered_map<long, int> index;
 	vector<Edge> edges;
 	long key = 0;
-
+	int pos = 0;
+	
 	
 	for (int i=0; i<(int)tris.size(); i++){
 		Edge temp1,temp2,temp3;
+		bool incpos1 = false, incpos2 = false, incpos3 = false;
 		temp1.v[0] = tris[i].v[0];
 		temp1.v[1] = tris[i].v[1];
+		temp1.oriented = false;
 		if (hashVert(verts[temp1.v[0]],bbox) == 0){
 			key = hashVert(verts[temp1.v[1]],bbox);
 		}
@@ -467,11 +470,22 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 		
 		if (index.find(key) == index.end()){
 			edges.push_back(temp1);
-			index[key] = 1;
+			index[key] = pos;
+			incpos1 = true;
+			//cerr << index[key] << endl;
+		}
+		else{
+			if (edges[index[key]].v[1] == temp1.v[0] && edges[index[key]].v[0] == temp1.v[1]){
+    			edges[index[key]].oriented = true;
+    		}	
+		}
+		if (incpos1 == true){
+			pos += 1;
 		}
 		
 		temp2.v[0] = tris[i].v[1];
 		temp2.v[1] = tris[i].v[2];
+		temp2.oriented = false;
 		if (hashVert(verts[temp2.v[0]],bbox) == 0){
 			key = hashVert(verts[temp2.v[1]],bbox);
 		}
@@ -484,11 +498,21 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 		
 		if (index.find(key) == index.end()){
 			edges.push_back(temp2);
-			index[key] = 1;
+			index[key] = pos;
+			incpos2 = true;	
+		}
+		else{
+			if (edges[index[key]].v[1] == temp2.v[0] && edges[index[key]].v[0] == temp2.v[1]){
+    			edges[index[key]].oriented = true;
+    		}	
+		}
+		if (incpos2 == true){
+			pos += 1;
 		}
 		
 		temp3.v[0] = tris[i].v[2];
 		temp3.v[1] = tris[i].v[0];
+		temp3.oriented = false;
 		if (hashVert(verts[temp3.v[0]],bbox) == 0){
 			key = hashVert(verts[temp3.v[1]],bbox);
 		}
@@ -501,11 +525,21 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 		
 		if (index.find(key) == index.end()){
 			edges.push_back(temp3);
-			index[key] = 1;
+			index[key] = pos;
+			incpos3 = true;
 		}
+		else{
+			if (edges[index[key]].v[1] == temp3.v[0] && edges[index[key]].v[0] == temp3.v[1]){
+    			edges[index[key]].oriented = true;
+    		}	
+		}
+		if (incpos3 == true){
+			pos += 1;
+		}
+		
 	}
 	
-	
+	//cerr < "gethere" << endl;
 	return edges;
 }
 
@@ -520,8 +554,14 @@ bool Mesh::basicValidity()
     int V = (int) verts.size();
     int E = (int) edges.size();
     int F = (int) tris.size();
-    int eulerchar = V - E + F;
-    cerr << "Euler's Characteristic: " << eulerchar << " Edges: " << edges.size() << endl;
+    eulerchar = V - E + F;
+    cerr << "Euler's Characteristic: " << eulerchar << "\nEdges: " << edges.size() << endl;
+    
+    for (int i=0; i<(int)edges.size(); i++){
+    	if (edges[i].oriented == false){
+    		break;
+    	}
+    }
     
     unordered_map<int, int> vertindex;
     for (int i=0; i<(int)verts.size(); i++){
@@ -581,7 +621,7 @@ bool Mesh::manifoldValidity()
     long key;
     vector<Edge> edges = createEdges(bbox);
     
-    int eulerchar = (int) verts.size() - (int) edges.size() + (int) tris.size();
+    //int eulerchar = (int) verts.size() - (int) edges.size() + (int) tris.size();
     
     if (eulerchar%2 == 0){
     	flag = true;
@@ -589,6 +629,7 @@ bool Mesh::manifoldValidity()
     else{
     	flag = false;
     }
+    
     
     if (flag == true){
 		unordered_map<int,int> edgeindex;
@@ -700,4 +741,53 @@ bool Mesh::manifoldValidity()
     
     
     return flag;
+}
+
+
+int Mesh::getEuler(){
+	return eulerchar;
+}
+
+vector<cgp::Point> Mesh::getVerts(){
+	return verts;
+}
+
+void Mesh::setVerts(vector<cgp::Point> pnt){
+	verts.clear();
+	verts = pnt;
+}
+
+vector<Edge> Mesh::getEdges(){
+	cgp::BoundBox bbox;
+    for(int i = 0; i < (int) verts.size(); i++)
+        bbox.includePnt(verts[i]);
+	return createEdges(bbox);	
+}
+
+
+bool Mesh::checkEdgeBound(vector<Edge> edges){
+	cgp::BoundBox bbox;
+    for(int i = 0; i < (int) verts.size(); i++)
+        bbox.includePnt(verts[i]);
+	
+	bool flag = true;
+	for (int i=0; i<(int)edges.size(); i++){
+		if (verts[edges[i].v[0]].x < bbox.min.x && verts[edges[i].v[0]].y < bbox.min.y && verts[edges[i].v[0]].z < bbox.min.z){
+			flag = false;
+			break;
+		}
+		else if (verts[edges[i].v[0]].x > bbox.max.x && verts[edges[i].v[0]].y < bbox.max.y && verts[edges[i].v[0]].z < bbox.max.z){
+			flag = false;
+			break;
+		}
+		if (verts[edges[i].v[1]].x < bbox.min.x && verts[edges[i].v[1]].y < bbox.min.y && verts[edges[i].v[1]].z < bbox.min.z){
+			flag = false;
+			break;
+		}
+		else if (verts[edges[i].v[1]].x > bbox.max.x && verts[edges[i].v[1]].y < bbox.max.y && verts[edges[i].v[1]].z < bbox.max.z){
+			flag = false;
+			break;
+		}
+	}
+	return flag;
 }
