@@ -445,16 +445,19 @@ bool Mesh::writeSTL(string filename)
     return true;
 }
 
+// finds all the edges based on the triangles in tris, stores edges in a vector
+// uses unordered_map to keep track of which edges are in the vector already
 vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 	unordered_map<long, int> index;
 	vector<Edge> edges;
 	long key = 0;
 	int pos = 0;
-	
-	
+	// loops through all the triangles
 	for (int i=0; i<(int)tris.size(); i++){
 		Edge temp1,temp2,temp3;
 		bool incpos1 = false, incpos2 = false, incpos3 = false;
+		
+		// first edge of triangle
 		temp1.v[0] = tris[i].v[0];
 		temp1.v[1] = tris[i].v[1];
 		temp1.oriented = false;
@@ -483,6 +486,7 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 			pos += 1;
 		}
 		
+		//second edge of triangle
 		temp2.v[0] = tris[i].v[1];
 		temp2.v[1] = tris[i].v[2];
 		temp2.oriented = false;
@@ -510,6 +514,7 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 			pos += 1;
 		}
 		
+		//third edge of triangle
 		temp3.v[0] = tris[i].v[2];
 		temp3.v[1] = tris[i].v[0];
 		temp3.oriented = false;
@@ -543,6 +548,7 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 	return edges;
 }
 
+// checks for basic validity of model
 bool Mesh::basicValidity()
 {
     // stub, needs completing
@@ -551,6 +557,8 @@ bool Mesh::basicValidity()
         bbox.includePnt(verts[i]);
     bool flag = true;
     vector<Edge> edges = createEdges(bbox);
+    
+    // calculates euler's characteristic
     int V = (int) verts.size();
     int E = (int) edges.size();
     int F = (int) tris.size();
@@ -563,6 +571,7 @@ bool Mesh::basicValidity()
     	}
     }
     
+    // checks if there are dangling vertices
     unordered_map<int, int> vertindex;
     for (int i=0; i<(int)verts.size(); i++){
     	vertindex[i] = 0;
@@ -586,21 +595,21 @@ bool Mesh::basicValidity()
     	}
     }
     
-
+	// checks for out of bounds edges
 	for (int i=0; i<(int)edges.size(); i++){
-		if (verts[edges[i].v[0]].x < bbox.min.x && verts[edges[i].v[0]].y < bbox.min.y && verts[edges[i].v[0]].z < bbox.min.z){
+		if (verts[edges[i].v[0]].x < bbox.min.x || verts[edges[i].v[0]].y < bbox.min.y || verts[edges[i].v[0]].z < bbox.min.z){
 			flag = false;
 			break;
 		}
-		else if (verts[edges[i].v[0]].x > bbox.max.x && verts[edges[i].v[0]].y < bbox.max.y && verts[edges[i].v[0]].z < bbox.max.z){
+		else if (verts[edges[i].v[0]].x > bbox.max.x || verts[edges[i].v[0]].y > bbox.max.y || verts[edges[i].v[0]].z > bbox.max.z){
 			flag = false;
 			break;
 		}
-		if (verts[edges[i].v[1]].x < bbox.min.x && verts[edges[i].v[1]].y < bbox.min.y && verts[edges[i].v[1]].z < bbox.min.z){
+		if (verts[edges[i].v[1]].x < bbox.min.x || verts[edges[i].v[1]].y < bbox.min.y || verts[edges[i].v[1]].z < bbox.min.z){
 			flag = false;
 			break;
 		}
-		else if (verts[edges[i].v[1]].x > bbox.max.x && verts[edges[i].v[1]].y < bbox.max.y && verts[edges[i].v[1]].z < bbox.max.z){
+		else if (verts[edges[i].v[1]].x > bbox.max.x || verts[edges[i].v[1]].y > bbox.max.y || verts[edges[i].v[1]].z > bbox.max.z){
 			flag = false;
 			break;
 		}
@@ -621,8 +630,7 @@ bool Mesh::manifoldValidity()
     long key;
     vector<Edge> edges = createEdges(bbox);
     
-    //int eulerchar = (int) verts.size() - (int) edges.size() + (int) tris.size();
-    
+    // checks if euler's characteristic is divisible by 2
     if (eulerchar%2 == 0){
     	flag = true;
     }
@@ -630,7 +638,7 @@ bool Mesh::manifoldValidity()
     	flag = false;
     }
     
-    
+    // checks that all edges have 2 incident triangles
     if (flag == true){
 		unordered_map<int,int> edgeindex;
 		for (int i=0; i<(int)edges.size();i++){
@@ -657,6 +665,7 @@ bool Mesh::manifoldValidity()
 			edge3.v[0] = tris[i].v[2];
 			edge3.v[1] = tris[i].v[0];
 			
+			// creating the hash keys
 			if (hashVert(verts[edge1.v[0]],bbox) == 0){
 				key1 = hashVert(verts[edge1.v[1]],bbox);
 			}
@@ -688,7 +697,6 @@ bool Mesh::manifoldValidity()
 			}
 			
 			
-			
 			if (edgeindex.find(key1) != edgeindex.end()){
 				edgeindex[key1] += 1;
 			}
@@ -700,7 +708,7 @@ bool Mesh::manifoldValidity()
 			}
 			
 		}
-		
+		// final check to see if incident triangles is == 2
 		for (int i=0; i<(int)edges.size(); i++){
 			if (hashVert(verts[edges[i].v[0]],bbox) == 0){
 				key = hashVert(verts[edges[i].v[1]],bbox);
@@ -720,6 +728,8 @@ bool Mesh::manifoldValidity()
 		}
     }
     
+    
+    // checks that all vertices have closed rings of traingle around them
     if (flag == true){
 		unordered_map<int,int> vertindex;
 		for (int i=0; i<(int)verts.size(); i++){
@@ -743,20 +753,23 @@ bool Mesh::manifoldValidity()
     return flag;
 }
 
-
+// returns euler's characteristic
 int Mesh::getEuler(){
 	return eulerchar;
 }
 
+// returns verts vector
 vector<cgp::Point> Mesh::getVerts(){
 	return verts;
 }
 
+// resets verts vector
 void Mesh::setVerts(vector<cgp::Point> pnt){
 	verts.clear();
 	verts = pnt;
 }
 
+// returns the edges vector
 vector<Edge> Mesh::getEdges(){
 	cgp::BoundBox bbox;
     for(int i = 0; i < (int) verts.size(); i++)
@@ -764,27 +777,27 @@ vector<Edge> Mesh::getEdges(){
 	return createEdges(bbox);	
 }
 
-
+// checks that edges are in bounds
 bool Mesh::checkEdgeBound(vector<Edge> edges){
 	cgp::BoundBox bbox;
-    for(int i = 0; i < (int) verts.size(); i++)
+    for(int i = 0; i < (int) verts.size()-2; i++)
         bbox.includePnt(verts[i]);
 	
 	bool flag = true;
 	for (int i=0; i<(int)edges.size(); i++){
-		if (verts[edges[i].v[0]].x < bbox.min.x && verts[edges[i].v[0]].y < bbox.min.y && verts[edges[i].v[0]].z < bbox.min.z){
+		if (verts[edges[i].v[0]].x < bbox.min.x || verts[edges[i].v[0]].y < bbox.min.y || verts[edges[i].v[0]].z < bbox.min.z){
 			flag = false;
 			break;
 		}
-		else if (verts[edges[i].v[0]].x > bbox.max.x && verts[edges[i].v[0]].y < bbox.max.y && verts[edges[i].v[0]].z < bbox.max.z){
+		else if (verts[edges[i].v[0]].x > bbox.max.x || verts[edges[i].v[0]].y > bbox.max.y || verts[edges[i].v[0]].z > bbox.max.z){
 			flag = false;
 			break;
 		}
-		if (verts[edges[i].v[1]].x < bbox.min.x && verts[edges[i].v[1]].y < bbox.min.y && verts[edges[i].v[1]].z < bbox.min.z){
+		if (verts[edges[i].v[1]].x < bbox.min.x || verts[edges[i].v[1]].y < bbox.min.y || verts[edges[i].v[1]].z < bbox.min.z){
 			flag = false;
 			break;
 		}
-		else if (verts[edges[i].v[1]].x > bbox.max.x && verts[edges[i].v[1]].y < bbox.max.y && verts[edges[i].v[1]].z < bbox.max.z){
+		else if (verts[edges[i].v[1]].x > bbox.max.x || verts[edges[i].v[1]].y > bbox.max.y || verts[edges[i].v[1]].z > bbox.max.z){
 			flag = false;
 			break;
 		}

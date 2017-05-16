@@ -90,7 +90,7 @@ void TestMesh::testEdgeBounds(){
 	tempedge.v[1] = verts.size()-1;
 	edges.push_back(tempedge);
 	mesh->setVerts(verts);
-	CPPUNIT_ASSERT(mesh->checkEdgeBound(edges));
+	CPPUNIT_ASSERT(!mesh->checkEdgeBound(edges));
 	CPPUNIT_ASSERT(!mesh->basicValidity());
 }
 
