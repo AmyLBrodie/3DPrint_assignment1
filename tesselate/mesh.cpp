@@ -448,25 +448,8 @@ bool Mesh::writeSTL(string filename)
 vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 	unordered_map<long, int> index;
 	vector<Edge> edges;
-	Edge temp1,temp2,temp3;
 	long key = 0;
-	
-	/*temp1.v[0] = tris[0].v[0];
-	temp1.v[1] = tris[0].v[1];
-	edges.push_back(temp1);
-	//key = temp1.v[0]*2500.0f + temp1.v[1]*5000.0f;
-	key = hashVert(verts[temp1.v[0]],bbox) + hashVert(verts[temp1.v[1]],bbox);
-	index[key] = 1;
-	temp2.v[0] = tris[0].v[1];
-	temp2.v[1] = tris[0].v[2];
-	edges.push_back(temp2);
-	key = hashVert(verts[temp2.v[0]],bbox) + hashVert(verts[temp2.v[1]],bbox);
-	index[key] = 1;
-	temp3.v[0] = tris[0].v[2];
-	temp3.v[1] = tris[0].v[0];
-	edges.push_back(temp3);
-	key = hashVert(verts[temp3.v[0]],bbox) + hashVert(verts[temp3.v[1]],bbox);
-	index[key] = 1;*/
+
 	
 	for (int i=0; i<(int)tris.size(); i++){
 		Edge temp1,temp2,temp3;
@@ -481,14 +464,12 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 		else {
 			key = hashVert(verts[temp1.v[0]],bbox) * hashVert(verts[temp1.v[1]],bbox);
 		}
-		//key1 = temp1.v[1] + temp1.v[0];
-		//cerr << temp1.v[0] << " "<< temp1.v[1] << " "<< hashVert(verts[temp1.v[0]],bbox) << " " << hashVert(verts[temp1.v[1]],bbox)  << endl;
+		
 		if (index.find(key) == index.end()){
 			edges.push_back(temp1);
 			index[key] = 1;
-			//cerr << "1" << endl;
 		}
-		//cerr << "Edges: " << temp1.v[0] << " " << temp1.v[1] << endl;
+		
 		temp2.v[0] = tris[i].v[1];
 		temp2.v[1] = tris[i].v[2];
 		if (hashVert(verts[temp2.v[0]],bbox) == 0){
@@ -500,14 +481,12 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 		else {
 			key = hashVert(verts[temp2.v[0]],bbox) * hashVert(verts[temp2.v[1]],bbox);
 		}
-		//key1 = temp2.v[1] + temp2.v[0];
-		//cerr << temp2.v[0] << " "<< temp2.v[1] << " "<<hashVert(verts[temp2.v[0]],bbox) << " " << hashVert(verts[temp2.v[1]],bbox) << endl;
+		
 		if (index.find(key) == index.end()){
 			edges.push_back(temp2);
 			index[key] = 1;
-			//cerr << "2" << endl;
 		}
-		//cerr << "Edges: " << temp2.v[0] << " " << temp2.v[1] << endl;
+		
 		temp3.v[0] = tris[i].v[2];
 		temp3.v[1] = tris[i].v[0];
 		if (hashVert(verts[temp3.v[0]],bbox) == 0){
@@ -519,14 +498,11 @@ vector<Edge> Mesh::createEdges(cgp::BoundBox bbox){
 		else {
 			key = hashVert(verts[temp3.v[0]],bbox) * hashVert(verts[temp3.v[1]],bbox);
 		}
-		//key1 = temp3.v[1] + temp3.v[0];
-		//cerr << temp3.v[0] << " "<< temp3.v[1] << " "<< hashVert(verts[temp3.v[0]],bbox) << " " << hashVert(verts[temp3.v[1]],bbox)  << endl;
+		
 		if (index.find(key) == index.end()){
 			edges.push_back(temp3);
 			index[key] = 1;
-			//cerr << "3" << endl;
 		}
-		//cerr << "Edges: " << temp3.v[0] << " " << temp3.v[1] << endl;
 	}
 	
 	
